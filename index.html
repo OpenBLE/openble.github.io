@@ -4,11 +4,11 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Openble.github.io : Wabsite" />
+    <meta name="description" content="OpenBLE : Wabsite" />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Openble.github.io</title>
+    <title>OpenBLE</title>
   </head>
 
   <body>
@@ -16,10 +16,10 @@
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
-          <a id="forkme_banner" href="https://github.com/OpenBLE">View on GitHub</a>
+          <a id="forkme_banner" href="https://github.com/OpenBLE/OpenBLE">View on GitHub</a>
 
-          <h1 id="project_title">Openble.github.io</h1>
-          <h2 id="project_tagline">Wabsite</h2>
+          <h1 id="project_title">OpenBLE</h1>
+          <h2 id="project_tagline">BLE data service class and scanner for idevices</h2>
 
         </header>
     </div>
@@ -27,37 +27,110 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h3>Description</h3>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p>A simple iOS iPhone application that demonstrates how to use the CoreBluetooth Framework to connect to a Bluetooth LE 'spp' peripheral to read, write. Based on the <a href="https://developer.apple.com/library/IOS/samplecode/TemperatureSensor/Introduction/Intro.html">Apple 1.0 Temperature Sensor example code</a>.</p>
+
+<p>Currently supports the <a href="http://www.seeedstudio.com/depot/xadow-ble-slave-p-1546.html">Seeed Studio Xadow BLE device</a> as well as the <a href="http://redbearlab.com/bleshield/">Redbear</a> device. Should support many other devices with few changes. You can edit the LeDataService files to work for your device, particularly the characteristic UUIDs. I accept pull requests of new LeDataService classes for other devices, or if you want to ship my your device I might be able to get to it.</p>
+
+<p>Important: This project requires a Bluetooth LE Capable Device (iPhone 4s and later; iPad 3 and later; iPod Touch 5; iPad mini) and will not work on the simulator.</p>
+
+<p>BUILD REQUIREMENTS:</p>
+<ul>
+  <li>Xcode 5 or greater</li>
+  <li>iOS 7 SDK or greater</li>
+</ul>
+
+<p>RUNTIME REQUIREMENTS:<p>
+<ul>
+  <li>iOS 6 or later Bluetooth LE Capable Device Bluetooth LE Sensor/s</li>
+</ul>
+
+
+        <h3>Install it the hard way</h3>
+        <p>Download <a href="https://github.com/OpenBLE/OpenBLE">OpenBLE</a> and copy everything in /Classes into your xcode project. Or more preferrably use <a href="http://beta.cocoapods.org/?q=">cocoapods</a>.</p>
+
+        <h3>Install it via Cocoapods</h3>
+        <p>Create a new xcode project or workspace or go to your existing, open a terminal in that directory, and type:</p>
+
+        <pre><code>sudo gem install cocoapods
+touch Podfile
+echo -e "platform :ios, '5.0'\npod 'OpenBLE'" >> Podfile
+pod install</code></pre>
+
+        <p>It should complete and tell you to utilize the .xcworkspace from now on. 
+
+        <h3>Use it</h3>
+        <p>Click on that xcworkspace file to open your project from now on and youll find your project with the source code all loaded up. Now you can:</p>
+
+        <pre><code>#import "LeDiscovery.h"
+#import "LeDataService.h"</code></pre>
+
+        <p>And have your class register as Discovery and Service protocols:</p>
+
+        <pre><code>@interface ViewController ()  &#60;LeDiscoveryDelegate, LeServiceDelegate&#62;
+
+
+@end</code></pre>
+
+        <p>Create a discovery object, set its yourself as its delegates, and start scanning</p>
+
+        <pre><code>[[LeDiscovery sharedInstance] setDiscoveryDelegate:self];
+[[LeDiscovery sharedInstance] setPeripheralDelegate:self];
+[[LeDiscovery sharedInstance] startScanningForUUIDString:nil];</code></pre>
+
+        <p>When the Discovery finds something it and return a delegate so set up a delegate function:</p>
+
+        <pre><code>- (void) discoveryDidRefresh
+{
+    for (id object in [[LeDiscovery sharedInstance] foundPeripherals]) 
+    {
+      NSLog(@"peripheral: %@", object);
+    }
+}</code></pre>
+
+        <p>Or you could connect to the first one it finds:</p>
+        <pre><code>NSArray *devices = [[LeDiscovery sharedInstance] foundPeripherals];
+CBPeripheral *peripheral = (CBPeripheral*)[devices objectAtIndex:0];
+[[LeDiscovery sharedInstance] connectPeripheral:peripheral];</code></pre>
+
+
+        <p>You get a did change status delegate for a connect:</p>
+
+        <pre><code>- (void) serviceDidChangeStatus:(LeDataService*)service
+{
+    if ( [[service peripheral] isConnected] ) {
+        NSLog(@"Service (%@) connected", service.peripheral.name);
+    }
+}</code></pre>
+
+        <p>But you may want to wait a bit longer for the did receive rx/tx characteristics delegate:</p>
+
+        <pre><code>- (void) serviceDidReceiveCharacteristicsFromService:(LeDataService*)service
+{
+    NSLog(@"Service (%@) did receive characteristics", service.peripheral.name);
+}</code></pre>
+
+        <p>Because now you can send</p>
+        <pre><code>NSData *tosend = [@"Hello World" dataUsingEncoding:NSUTF8StringEncoding];
+[currentlyDisplayingService write:tosend];
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+        <p>and receive:</p>
+        <pre><code>- (void) serviceDidReceiveData:(NSData*)data fromService:(LeDataService*)service
+{
+    NSLog(@"%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+}</code></pre>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+        <h3>Example app</h3>
+        <p>Open the example app in /examples for a much more thorough implementation example. It lists bluetooth devices, connects, and when it recieves read and write characteristics segues to a screen where you can send and receive data</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+        <img style="width: 20%;" src="images/scanner.png"/><img style="width: 20%;" src="images/detail.png"/>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+        <h3><a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+        <p>Use the github issues queue <a href="https://github.com/OpenBLE/OpenBLE/issues">https://github.com/OpenBLE/OpenBLE/issues</a> to report bugs or contribute code.</p>
       </section>
     </div>
 
