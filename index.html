@@ -7,6 +7,7 @@
     <meta name="description" content="OpenBLE : Wabsite" />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/my.css">
 
     <title>OpenBLE</title>
   </head>
@@ -17,9 +18,10 @@
     <div id="header_wrap" class="outer">
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/OpenBLE/OpenBLE">View on GitHub</a>
+          <a class="apple_banner" href="https://itunes.apple.com/us/app/openble/id808685632?ls=1&mt=8"></a>
 
           <h1 id="project_title">OpenBLE</h1>
-          <h2 id="project_tagline">BLE data service class and scanner for idevices</h2>
+          <h2 id="project_tagline">BLE scanner and SPP chat for idevices</h2>
 
         </header>
     </div>
@@ -28,110 +30,160 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
-<h3>Description</h3>
+        <h3>Description</h3>
 
-<p>A simple iOS iPhone application that demonstrates how to use the CoreBluetooth Framework to connect to a Bluetooth LE 'spp' peripheral to read, write. Based on the <a href="https://developer.apple.com/library/IOS/samplecode/TemperatureSensor/Introduction/Intro.html">Apple 1.0 Temperature Sensor example code</a>.</p>
+        <p>A simple iOS iPhone application and source code that demonstrates how to use the CoreBluetooth Framework to connect to a Bluetooth LE 'spp' peripheral. It lists bluetooth devices, connects and segues to a screen where you can send and receive data. It even has reconnect on loss of connection, and backgrounding support!<p>
 
-<p>Currently supports the <a href="http://www.seeedstudio.com/depot/xadow-ble-slave-p-1546.html">Seeed Studio Xadow BLE device</a> as well as the <a href="http://redbearlab.com/bleshield/">Redbear</a> device. Should support many other devices with few changes. You can edit the LeDataService files to work for your device, particularly the characteristic UUIDs. I accept pull requests of new LeDataService classes for other devices, or if you want to ship me your device I might be able to get to it.</p>
+        <img style="width: 20%;" src="images/scanner.png"/><img style="width: 20%;" src="images/detail.png"/>
 
-<p>Important: This project requires a Bluetooth LE Capable Device (iPhone 4s and later; iPad 3 and later; iPod Touch 5; iPad mini) and will not work on the simulator.</p>
+        <p>BUILD REQUIREMENTS:</p>
+        <ul>
+          <li>Xcode 5 or greater</li>
+          <li>iOS 7 SDK or greater</li>
+        </ul>
 
-<p>BUILD REQUIREMENTS:</p>
-<ul>
-  <li>Xcode 5 or greater</li>
-  <li>iOS 7 SDK or greater</li>
-</ul>
-
-<p>RUNTIME REQUIREMENTS:<p>
-<ul>
-  <li>iOS 6 or later Bluetooth LE Capable Device Bluetooth LE Sensor/s</li>
-</ul>
-
+        <p>RUNTIME REQUIREMENTS:<p>
+        <ul>
+          <li>iOS 6 or later - will not work on the simulator</li>
+          <li>Bluetooth LE Capable Device - iPhone 4s and later; iPad 3 and later; iPod Touch 5; iPad mini</li>
+          <li>Bluetooth LE Sensor - Currently supports the <a href="http://www.seeedstudio.com/depot/xadow-ble-slave-p-1546.html">Seeed Studio Xadow BLE device</a> as well as the <a href="http://redbearlab.com/bleshield/">Redbear</a> device and you can add support for other devices using the plist files.</li>
+        </ul>
 
         <h3>Install it the hard way</h3>
-        <p>Download <a href="https://github.com/OpenBLE/OpenBLE">OpenBLE</a> and copy everything in /Classes into your xcode project. Or more preferrably use <a href="http://beta.cocoapods.org/?q=">cocoapods</a>.</p>
+        <p>Download <a href="https://github.com/OpenBLE/OpenBLE">OpenBLE</a> and copy everything in /Classes into your xcode project. Or more preferrably install via <a href="http://beta.cocoapods.org/?q=">cocoapods</a>.</p>
 
         <h3>Install it via Cocoapods</h3>
-        <p>Create a new xcode project or workspace or go to your existing, open a terminal in that directory, and type:</p>
+        <p>Create a new xcode project, if you don't have an existing one or our example, then open a terminal and enter the directory where your .xcodeproj lives and type:</p>
+        <pre><code>sudo gem install cocoapods</code></pre>
 
-        <pre><code>sudo gem install cocoapods
-touch Podfile
-echo -e "platform :ios, '5.0'\npod 'OpenBLE'" >> Podfile
-pod install</code></pre>
+        <p>Now Cocoapods is installed in your system so you'll never have to do that again. Now you need a Podfile where your .xcodeproj lives. If you're running our example project you already have one! So just cd there and skip this step. If you've created a new project type:</p>
+        <pre><code>touch Podfile
+echo -e "platform :ios, '6.0'\npod 'OpenBLE'" >> Podfile</code></pre>
 
-        <p>Or if you're using the example, theres already a podfile so just cd to that directory and type:</p>
+        <p>Now that cocoapods knows what to install for this project, type:</p>
+        <pre><code>pod install</code></pre>
 
-        <pre><code>sudo gem install cocoapods
-pod install</code></pre>
-
-        <p>It should complete and tell you to utilize the .xcworkspace from now on. 
+        <p>It should complete and tell you to <strong>utilize the new .xcworkspace from now on</strong>. Close your project if it was open, and open that new xcworkspace file. There's one thing you need to yet no matter what. You need to manually copy over the LE-Options.plist and LE-UUIDs.plist files from the Resources directory of OpenBLE. These files set up your scan preferences and UUIDs. By making them not part of the dependancy you can update them with new information and they wont get changed when you update OpenBLE.</p>
 
         <h3>Use it</h3>
-        <p>Click on that xcworkspace file to open your project from now on and youll find your project with the source code all loaded up. Now you can:</p>
+        <p>There are several pieces to the OpenBLE project. 
+          <ul>
+            <li>ScannerViewController and ScannerStoryboard</li>
+            <li>LeDiscovery class</li>
+            <li>LeDataService class</li>
+          </ul>
 
-        <pre><code>#import "LeDiscovery.h"
-#import "LeDataService.h"</code></pre>
+        <h4>ScannerViewController and ScannerStoryboard</h4>
+        <p>With these two files we've attempted to make a reference implementation to get a Chooser interface in your own app with almost no setup. Go to your target's General tab and set your Main Interface to ScannerStoryboard.storyboard, make sure to (re)name your storyboard to MainStoryboard and embed your initial View Controller in a Navigation Controller.
+        <img src="images/MainInterface.png"/>
+        <img src="images/embed.png"/>
+        <p>Now you can just run your app and you'll see the Chooser window and if you have BLE devices in range you'll see them! When you select a bluetooth device it will connect and segue to the initial View Controller of the MainStoryBoard. Nothing else is hooked up so nothing happens, but you're scanning for BLE devices! So let's make something happen.</p>
 
-        <p>And have your class register as Discovery and Service protocols:</p>
+        <p>In your View Controller:
+        <pre><code>#import "ScannerViewController.h"</code></pre>
 
-        <pre><code>@interface ViewController ()  &#60;LeDiscoveryDelegate, LeServiceDelegate&#62;
+        <p>And then presumably in viewDidLoad, you can dig out the peripheral you chose with:</p>
+        <pre><code>- (void)viewDidLoad
+{
+    [super viewDidLoad];
+  // Do any additional setup after loading the view, typically from a nib.
+    
+    UINavigationController *navController = (UINavigationController*)[self.navigationController presentingViewController];
+    ScannerViewController *rootController =(ScannerViewController*)[navController.viewControllers objectAtIndex:0];
+    CBPeripheral *peripheral = (CBPeripheral*)rootController.currentPeripheral;
+}</code></pre>
 
+        <p> Note, if you don't hang on to your CBPeripheral object your connection will be terminated by the sytem.</p>
+
+        <h4>LeDataService class</h4>
+        <p>Now that you have a peripheral you'll want to send and receive data. Thus the second part of OpenBLE, LeDataService, is a reference implementation for serial BLE devices. First, we need to set ourselves as a delegate for the LeDataProtocol so we can receive updates. In your ViewController.h file:
+
+                <pre><code>#import &#60;UIKit/UIKit.h&#62;
+#import "LeDataService.h"
+#import "ScannerViewController.h"
+
+@interface ViewController : UIViewController  &#60;LeDataProtocol&#62;
 
 @end</code></pre>
 
-        <p>Create a discovery object, set its yourself as its delegates, and start scanning</p>
+<p>Then, like we said above we need to hang on to our peripherals if we want to keep them. In this case LeDataService will hang on to our peripheral, but we need to hang on to it:</p>
+
+        <pre><code>#import "ViewController.h"
+
+@interface ViewController (){
+    LeDataService *dataService;
+}
+@end
+
+@implementation ViewController
+....</code></pre>
+
+        <p>Now back in viewdidload where we found our peripheral, lets init our service and start it up</p>
+        <pre><code>dataService = [[LeDataService alloc] initWithPeripheral:peripheral delegate:self];
+[dataService start];</code></pre>
+
+        <p>If startup was successful and the characteristics were found you'll get a serviceDidReceiveCharacteristicsFromService callback and you're ready to write. You'll get a didWriteFromService when complete and you can easily read from your device by registering for the serviceDidReceiveData callback:</p>
+        <pre><code>-(void)serviceDidReceiveCharacteristicsFromService:(LeDataService *)service
+{
+    NSData* tosend=[@"Hello World" dataUsingEncoding:NSUTF8StringEncoding];
+    [dataService write:tosend];
+}
+
+-(void)didWriteFromService:(LeDataService *)service withError:(NSError *)error
+{
+    NSLog(@"Data Sent!");
+}
+
+-(void)serviceDidReceiveData:(NSData *)data fromService:(LeDataService *)service
+{
+    NSString* text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    NSLog(@"%@", text);
+}</code></pre>
+
+        <p>Congrats, you're writing and reading from your device! Go on and start creating your app! For those who dont want to use the Storyboard, or want to know whats going on under the hood, continue below.</p>
+
+        <h4>LeDiscovery Class</h4>
+        <p>If you didnt want to use our storyboard as above, you'll need a quick walkthrough for discovery, too. If you did anything above, start over in a new project or if you trust yourself just undo everything.  You need to set your class (probably a view controller) as a LeDiscoveryDelegate</p>
+        <pre><code>@interface ViewController : UIViewController  &#60;LeDiscoveryDelegate&#62;
+
+@end</code></pre>
+
+        <p>Create a discovery object, probably in your viewDidLoad, set yourself as its delegate, and start scanning for all devices (nil)</p>
 
         <pre><code>[[LeDiscovery sharedInstance] setDiscoveryDelegate:self];
-[[LeDiscovery sharedInstance] setPeripheralDelegate:self];
 [[LeDiscovery sharedInstance] startScanningForUUIDString:nil];</code></pre>
 
-        <p>When the Discovery finds something it and return a delegate so set up a delegate function:</p>
-
+        <p>When the Discovery finds something it will tell you with th the discoveryDidRefresh delegate so set up that function:</p>
         <pre><code>- (void) discoveryDidRefresh
 {
-    for (id object in [[LeDiscovery sharedInstance] foundPeripherals]) 
-    {
-      NSLog(@"peripheral: %@", object);
+    //Connect to the first you find
+    NSArray *peripherals = [[LeDiscovery sharedInstance] foundPeripherals];
+    if([peripherals count] > 0){
+        CBPeripheral *peripheral = (CBPeripheral*)[peripherals objectAtIndex:0];
+        [[LeDiscovery sharedInstance] connectPeripheral:peripheral];
     }
 }</code></pre>
 
-        <p>Or you could connect to the first one it finds:</p>
-        <pre><code>NSArray *devices = [[LeDiscovery sharedInstance] foundPeripherals];
-CBPeripheral *peripheral = (CBPeripheral*)[devices objectAtIndex:0];
-[[LeDiscovery sharedInstance] connectPeripheral:peripheral];</code></pre>
-
-
-        <p>You get a did change status delegate for a connect:</p>
-
-        <pre><code>- (void) serviceDidChangeStatus:(LeDataService*)service
+        <p>You get a peripheralDidConnect delegate for a connect:</p>
+        <pre><code>- (void) peripheralDidConnect:(CBPeripheral *)peripheral
 {
-    if ( [[service peripheral] isConnected] ) {
-        NSLog(@"Service (%@) connected", service.peripheral.name);
-    }
-}</code></pre>
-
-        <p>But you may want to wait a bit longer for the did receive rx/tx characteristics delegate:</p>
-
-        <pre><code>- (void) serviceDidReceiveCharacteristicsFromService:(LeDataService*)service
-{
-    NSLog(@"Service (%@) did receive characteristics", service.peripheral.name);
-}</code></pre>
-
-        <p>Because now you can send</p>
-        <pre><code>NSData *tosend = [@"Hello World" dataUsingEncoding:NSUTF8StringEncoding];
-[currentlyDisplayingService write:tosend];
+    NSLog(@"Connected to: %@", [peripheral name]);
+}
 </code></pre>
 
-        <p>and receive:</p>
-        <pre><code>- (void) serviceDidReceiveData:(NSData*)data fromService:(LeDataService*)service
-{
-    NSLog(@"%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-}</code></pre>
+        <p>From there you've got a peripheral just like above! Like we mentioned there, make sure you save it or the system will disconnect the device and clear the memory. Take a look above at using LeDataService to make it easier to talk to your device!</p>
 
-        <h3>Example app</h3>
-        <p>Open the example app in /examples for a much more thorough implementation example. It lists bluetooth devices, connects, and when it recieves read and write characteristics segues to a screen where you can send and receive data</p>
+        <h3>User Settings</h3>
+        <P>Adding new device UUIDs to the LE-UUIDs.plist should be self explanatory. There are read UUIDs, write UUIDs and service UUIDs, and at least one of each is necessary.<p>
 
-        <img style="width: 20%;" src="images/scanner.png"/><img style="width: 20%;" src="images/detail.png"/>
+        <p>Options are a bit trickier, sadly. init-options is mapped to the CBCentralManager  initWithDelegate options. connect-options is mapped to the CBCentralManager connectPeripheral options and scan-options is mapped to the CBCentralManager scanForPeripheralsWithServices options. Look up each of these 3 to see what options are available. Normally you'd enter they defined constant key, for instance, CBCentralManagerScanOptionAllowDuplicatesKey into the array. However since we're storing strings in a plist, we don't have access to that constant. What we do have access to the string it defines. So to enable CBCentralManagerScanOptionAllowDuplicatesKey we have to enter kCBScanOptionAllowDuplicates. To find the correct keys string you'll have to NSLog the key or look it up. Again we don't think this is ideal, so we're looking for feedback on better options.
+
+        <h3>Further reading</h3>
+        <ul>
+          <li><a href="https://developer.apple.com/library/ios/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/AboutCoreBluetooth/Introduction.html#//apple_ref/doc/uid/TP40013257-CH1-SW1">Apple Core Bluetooth Programming Guide<a></li>
+          <li><a href="https://developer.apple.com/wwdc/videos/index.php?id=703">WWDC Videos (sign in required)</a></li>
+          <li><a href="https://developer.apple.com/library/ios/samplecode/TemperatureSensor/Introduction/Intro.html">Apple Temperature Sensor Example</a></li>
+        </ul>
 
         <h3><a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
 
